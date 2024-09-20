@@ -21,27 +21,26 @@ struct MyByteData<'a> {
 
 // Function to marshal byte data to JSON and return a pointer to bytes and their length
 #[no_mangle]
+#[allow(improper_ctypes_definitions)] // Suppress the warning for returning a tuple so we can go faster
 pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i32) -> (*mut c_void, usize) {
-    // Use the raw byte slice directly
     let raw_field1 = unsafe { std::slice::from_raw_parts(field1, field1_len) };
 
-    // Create the byte data structure
     let byte_data = MyByteData {
         field1: raw_field1,
         field2,
     };
 
-    // Serialize to JSON and then to bytes
-    let json_bytes = serde_json::to_vec(&byte_data).unwrap(); // Serialize to bytes directly
+    // Serialize to bytes directly
+    let json_bytes = serde_json::to_vec(&byte_data).unwrap();
 
     // Allocate memory for the return value
-    let mut boxed = json_bytes.into_boxed_slice(); // Declare as mutable
-    let ptr = boxed.as_mut_ptr(); // Get a raw pointer to the allocated memory
+    let ptr = json_bytes.as_ptr() as *mut c_void; // Get a raw pointer
+    let length = json_bytes.len(); // Get the length
 
     // Prevent Rust from freeing the memory
-    std::mem::forget(boxed);
+    std::mem::forget(json_bytes); // Keep the Vec alive
 
-    (ptr as *mut c_void, json_bytes.len())
+    (ptr, length) // Return the pointer and length
 }
 
 // Free the memory allocated for the bytes
@@ -83,6 +82,10 @@ pub extern "C" fn marshal_json(field1: *const c_char, field2: i32) -> *mut c_cha
 #[no_mangle]
 pub extern "C" fn free_json(s: *mut c_char) {
     if !s.is_null() {
-        unsafe { CString::from_raw(s); }
+        unsafe {
+            // Convert the raw pointer to CString, which will automatically free the memory
+            drop(CString::from_raw(s));
+        }
     }
 }
+
