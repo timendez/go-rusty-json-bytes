@@ -19,10 +19,18 @@ struct MyByteData<'a> {
     field2: i32,
 }
 
+// Struct to hold the pointer and length
+#[repr(C)]
+pub struct ByteReturn {
+    pub ptr: *mut c_void,
+    pub len: usize,
+}
+
 // Function to marshal byte data to JSON and return a pointer to bytes and their length
 #[no_mangle]
 #[allow(improper_ctypes_definitions)] // Suppress the warning for returning a tuple so we can go faster
-pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i32) -> (*mut c_void, usize) {
+pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i32) -> ByteReturn {
+    println!("Hello!");
     let raw_field1 = unsafe { std::slice::from_raw_parts(field1, field1_len) };
 
     let byte_data = MyByteData {
@@ -40,7 +48,8 @@ pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i3
     // Prevent Rust from freeing the memory
     std::mem::forget(json_bytes); // Keep the Vec alive
 
-    (ptr, length) // Return the pointer and length
+    println!("Hello!");
+    ByteReturn { ptr, len: length } // Return the struct
 }
 
 // Free the memory allocated for the bytes
@@ -49,11 +58,10 @@ pub extern "C" fn free_bytes(ptr: *mut c_void) {
     if !ptr.is_null() {
         unsafe {
             // Free the memory allocated for the bytes
-            let _ = Box::from_raw(ptr as *mut u8); // Correctly cast to u8 pointer
+            let _ = Box::from_raw(ptr as *mut u8);
         }
     }
 }
-
 
 // Function to marshal a Rust string to JSON and return a C string
 pub extern "C" fn marshal_json(field1: *const c_char, field2: i32) -> *mut c_char {
