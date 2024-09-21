@@ -2,7 +2,7 @@ package main
 
 /*
 // Link the Rust shared library that we will call from Go
-#cgo LDFLAGS: -L./rusty-json-bytes/target/release -lrusty_json_bytes
+#cgo LDFLAGS: -L./ -lrusty_json_bytes
 
 #include <stdlib.h> // Include the standard C library (for memory management)
 #include <stdint.h> // Include stdint.h for uint8_t
@@ -33,6 +33,7 @@ func main() {
 
 	// Convert the C bytes returned by Rust to a Go byte slice
 	jsonBytes := C.GoBytes(result.ptr, C.int(result.len))
+	fmt.Println("JSON Bytes from Rust:", jsonBytes)
 
 	// Convert the byte slice to a Go string for easier printing
 	jsonString := string(jsonBytes)

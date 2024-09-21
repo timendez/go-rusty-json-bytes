@@ -30,7 +30,6 @@ pub struct ByteReturn {
 #[no_mangle]
 #[allow(improper_ctypes_definitions)] // Suppress the warning for returning a tuple so we can go faster
 pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i32) -> ByteReturn {
-    println!("Hello!");
     let raw_field1 = unsafe { std::slice::from_raw_parts(field1, field1_len) };
 
     let byte_data = MyByteData {
@@ -48,7 +47,6 @@ pub extern "C" fn marshal_bytes(field1: *const u8, field1_len: usize, field2: i3
     // Prevent Rust from freeing the memory
     std::mem::forget(json_bytes); // Keep the Vec alive
 
-    println!("Hello!");
     ByteReturn { ptr, len: length } // Return the struct
 }
 
